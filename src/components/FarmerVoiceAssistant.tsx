@@ -20,10 +20,38 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 const QUICK_PROMPTS = [
-  { icon: CloudRain, title: "Weather", description: "Get today's forecast" },
-  { icon: Bug, title: "Pest Help", description: "Identify & control pests" },
-  { icon: Sprout, title: "Planting", description: "Best planting tips" },
-  { icon: Calendar, title: "Harvest", description: "Optimal harvest times" },
+  {
+    icon: CloudRain,
+    title: "Weather",
+    description: "Today's forecast",
+    color: "from-blue-400 to-blue-600",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-600"
+  },
+  {
+    icon: Bug,
+    title: "Pest Help",
+    description: "Control pests",
+    color: "from-red-400 to-orange-500",
+    bgColor: "bg-red-50",
+    textColor: "text-red-600"
+  },
+  {
+    icon: Sprout,
+    title: "Planting",
+    description: "Best tips",
+    color: "from-green-400 to-green-600",
+    bgColor: "bg-green-50",
+    textColor: "text-green-600"
+  },
+  {
+    icon: Calendar,
+    title: "Harvest",
+    description: "Right timing",
+    color: "from-amber-400 to-orange-500",
+    bgColor: "bg-amber-50",
+    textColor: "text-amber-600"
+  },
 ];
 
 export function FarmerVoiceAssistant() {
@@ -38,12 +66,16 @@ export function FarmerVoiceAssistant() {
     onConnect: () => {
       console.log("Connected to farm assistant");
       toast({
-        title: "Connected!",
-        description: "Your farm assistant is ready to help.",
+        title: "Ready to help!",
+        description: "I'm here to answer your farming questions.",
       });
     },
     onDisconnect: () => {
       console.log("Disconnected from assistant");
+      toast({
+        title: "Disconnected",
+        description: "Tap the button again when you need me.",
+      });
     },
     onMessage: (message: any) => {
       if (message.type === "user_transcript" && message.user_transcription_event?.user_transcript) {
@@ -69,8 +101,8 @@ export function FarmerVoiceAssistant() {
       console.error("Conversation error:", error);
       toast({
         variant: "destructive",
-        title: "Connection Error",
-        description: "Failed to connect. Please check your Agent ID.",
+        title: "Connection Problem",
+        description: "Can't connect right now. Please try again.",
       });
       setIsConnecting(false);
     },
@@ -88,8 +120,8 @@ export function FarmerVoiceAssistant() {
     if (!agentId.trim()) {
       setShowAgentInput(true);
       toast({
-        title: "Agent ID Required",
-        description: "Please enter your ElevenLabs Agent ID to start.",
+        title: "Setup Needed",
+        description: "Please enter your ID to get started.",
       });
       return;
     }
@@ -97,7 +129,7 @@ export function FarmerVoiceAssistant() {
     setIsConnecting(true);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       await conversation.startSession({
         agentId: agentId.trim(),
         connectionType: "webrtc",
@@ -107,8 +139,8 @@ export function FarmerVoiceAssistant() {
       if (error.name === "NotAllowedError") {
         toast({
           variant: "destructive",
-          title: "Microphone Access Required",
-          description: "Please enable microphone access to use voice features.",
+          title: "Need Microphone",
+          description: "Please allow microphone access to talk.",
         });
       }
     } finally {
@@ -136,65 +168,72 @@ export function FarmerVoiceAssistant() {
       role="application"
       aria-label="Farm Voice Assistant"
     >
-      {/* Hero Header */}
-      <header className="bg-gradient-hero px-6 pt-8 pb-10 safe-area-top rounded-b-[2.5rem] shadow-elevated">
-        <div className="flex items-center justify-between mb-6">
+      <header className="bg-gradient-to-br from-green-600 via-green-700 to-emerald-800 px-6 pt-8 pb-10 safe-area-top rounded-b-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxIDAgNiAyLjY5IDYgNnMtMi42OSA2LTYgNi02LTIuNjktNi02IDIuNjktNiA2LTZ6IiBzdHJva2U9IiNmZmYiIHN0cm9rZS1vcGFjaXR5PSIuMSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9nPjwvc3ZnPg==')] opacity-10" />
+
+        <div className="relative z-10 flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div 
-              className="w-12 h-12 bg-primary-foreground/20 backdrop-blur rounded-2xl flex items-center justify-center"
+            <div
+              className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg animate-float"
               aria-hidden="true"
             >
-              <Leaf className="w-6 h-6 text-primary-foreground" />
+              <Leaf className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="font-display text-xl font-bold text-primary-foreground">
-                Farm Assistant
+              <h1 className="font-display text-2xl font-bold text-white drop-shadow-lg">
+                Farm Helper
               </h1>
-              <p className="text-sm text-primary-foreground/80">
-                Voice-powered help
+              <p className="text-sm text-white/90 font-medium">
+                Talk to me anytime
               </p>
             </div>
           </div>
-          <button 
+          <button
             aria-label="Help and settings"
-            className="w-11 h-11 rounded-full bg-primary-foreground/15 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary-foreground/50"
+            className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center hover:bg-white/25 transition-all duration-300 hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/50"
           >
-            <HelpCircle className="w-5 h-5 text-primary-foreground" aria-hidden="true" />
+            <HelpCircle className="w-6 h-6 text-white" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Weather integrated in header */}
         <WeatherWidget />
       </header>
 
-      {/* Agent ID Input */}
       {showAgentInput && !isConnected && (
         <div className="px-5 -mt-4 relative z-10 animate-slide-up">
-          <div className="bg-card rounded-3xl p-5 border border-border shadow-elevated">
-            <label 
-              htmlFor="agent-id-input"
-              className="text-base font-display font-semibold text-foreground block mb-3"
-            >
-              Enter Agent ID
-            </label>
+          <div className="bg-white rounded-3xl p-6 border-2 border-green-200 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                <span className="text-2xl">🔑</span>
+              </div>
+              <div>
+                <label
+                  htmlFor="agent-id-input"
+                  className="text-lg font-display font-bold text-gray-800 block"
+                >
+                  Setup Required
+                </label>
+                <p className="text-sm text-gray-600">Enter your ID to begin</p>
+              </div>
+            </div>
             <input
               id="agent-id-input"
               type="text"
               value={agentId}
               onChange={(e) => setAgentId(e.target.value)}
-              placeholder="Your ElevenLabs Agent ID..."
+              placeholder="Paste your ID here..."
               aria-describedby="agent-id-help"
               className={cn(
                 "w-full px-5 py-4 rounded-2xl text-base",
-                "bg-muted border-2 border-transparent",
-                "text-foreground placeholder:text-muted-foreground",
-                "focus:outline-none focus:border-primary focus:bg-background",
+                "bg-gray-50 border-2 border-gray-200",
+                "text-gray-800 placeholder:text-gray-400",
+                "focus:outline-none focus:border-green-500 focus:bg-white",
                 "transition-all duration-200"
               )}
             />
-            <p id="agent-id-help" className="text-sm text-muted-foreground mt-3">
-              Create a public agent at{" "}
-              <span className="text-primary font-medium">elevenlabs.io</span>
+            <p id="agent-id-help" className="text-sm text-gray-600 mt-3 leading-relaxed">
+              Get your ID from{" "}
+              <span className="text-green-600 font-semibold">elevenlabs.io</span>
             </p>
           </div>
         </div>
@@ -203,17 +242,18 @@ export function FarmerVoiceAssistant() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col px-5 pt-6 overflow-hidden" role="main">
         {!isConnected && messages.length === 0 ? (
-          // Welcome Screen
           <div className="flex-1 flex flex-col animate-fade-in">
-            <h2 className="font-display text-lg font-bold text-foreground mb-4">
-              How can I help?
-            </h2>
-            <p className="text-muted-foreground text-sm mb-5">
-              Tap a topic or press the button below to speak
-            </p>
+            <div className="mb-6">
+              <h2 className="font-display text-2xl font-bold text-gray-800 mb-2 leading-tight">
+                What can I help with?
+              </h2>
+              <p className="text-gray-600 text-base font-medium">
+                Just tap what you need or speak to me
+              </p>
+            </div>
             
-            <div 
-              className="grid grid-cols-2 gap-3"
+            <div
+              className="grid grid-cols-2 gap-4"
               role="list"
               aria-label="Quick action topics"
             >
@@ -223,6 +263,9 @@ export function FarmerVoiceAssistant() {
                   icon={prompt.icon}
                   title={prompt.title}
                   description={prompt.description}
+                  color={prompt.color}
+                  bgColor={prompt.bgColor}
+                  textColor={prompt.textColor}
                   onClick={() => {
                     if (!agentId) setShowAgentInput(true);
                   }}
@@ -231,16 +274,34 @@ export function FarmerVoiceAssistant() {
               ))}
             </div>
 
-            {/* Tips section */}
-            <div className="mt-6 p-5 bg-secondary/50 rounded-3xl border border-secondary">
-              <h3 className="font-display font-semibold text-secondary-foreground mb-2">
-                💡 Voice Tips
-              </h3>
-              <ul className="text-sm text-muted-foreground space-y-1" role="list">
-                <li>• Speak clearly and naturally</li>
-                <li>• Ask about weather, pests, or planting</li>
-                <li>• Tap the microphone to start</li>
-              </ul>
+            <div className="mt-auto space-y-4">
+              <div className="relative p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200/50 shadow-lg overflow-hidden group hover:shadow-xl transition-shadow duration-300">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-transparent rounded-bl-full" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center shadow-md">
+                      <span className="text-2xl">💡</span>
+                    </div>
+                    <h3 className="font-display font-bold text-lg text-amber-900">
+                      Quick Tips
+                    </h3>
+                  </div>
+                  <ul className="space-y-2" role="list">
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-600 mt-0.5">✓</span>
+                      <span className="text-amber-900 text-sm font-medium">Speak naturally like talking to a friend</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-600 mt-0.5">✓</span>
+                      <span className="text-amber-900 text-sm font-medium">Ask about weather, crops, or pests</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-600 mt-0.5">✓</span>
+                      <span className="text-amber-900 text-sm font-medium">Tap the big green button to start</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -248,15 +309,15 @@ export function FarmerVoiceAssistant() {
           <ScrollArea className="flex-1 -mx-5 px-5" aria-label="Conversation history">
             <div className="space-y-4 py-4" role="log" aria-live="polite">
               {messages.length === 0 && isConnected && (
-                <div className="text-center py-10" role="status">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Leaf className="w-8 h-8 text-primary" aria-hidden="true" />
+                <div className="text-center py-12 animate-fade-in" role="status">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse-slow">
+                    <Leaf className="w-10 h-10 text-white" aria-hidden="true" />
                   </div>
-                  <p className="text-muted-foreground text-base font-medium">
+                  <p className="text-gray-800 text-xl font-bold mb-1">
                     I'm listening...
                   </p>
-                  <p className="text-muted-foreground/70 text-sm mt-1">
-                    Ask me anything about farming
+                  <p className="text-gray-600 text-base mt-2">
+                    Go ahead, ask me anything
                   </p>
                 </div>
               )}
@@ -283,20 +344,26 @@ export function FarmerVoiceAssistant() {
             onClick={handleVoiceClick}
           />
           <VoiceWaveform isActive={isConnected} isSpeaking={conversation.isSpeaking} />
-          <p 
-            className="text-base font-medium text-muted-foreground mt-4 text-center"
-            role="status"
-            aria-live="polite"
-          >
-            {isConnecting 
-              ? "Connecting..." 
-              : isConnected 
-                ? conversation.isSpeaking 
-                  ? "Assistant speaking..." 
-                  : "Listening... Tap to stop"
-                : "Tap to start talking"
-            }
-          </p>
+          <div className="mt-4 text-center">
+            <p
+              className="text-lg font-bold text-gray-800"
+              role="status"
+              aria-live="polite"
+            >
+              {isConnecting
+                ? "Getting ready..."
+                : isConnected
+                ? conversation.isSpeaking
+                  ? "I'm speaking..."
+                  : "I'm listening..."
+                : "Tap to talk"}
+            </p>
+            {!isConnecting && (
+              <p className="text-sm text-gray-600 mt-1 font-medium">
+                {isConnected ? "Tap button to stop" : "Press the big button above"}
+              </p>
+            )}
+          </div>
         </div>
       </footer>
 

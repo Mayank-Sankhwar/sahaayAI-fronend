@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 /* Farmer Voice Assistant - Beautiful Mobile Design System */
 
@@ -329,5 +329,48 @@
 
   .animate-fade-in {
     animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  /* Subtle bounce animation */
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+  }
+
+  /* Slow pulse animation */
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
+  }
+
+  /* Drop shadow glow effect */
+  .drop-shadow-glow {
+    filter: drop-shadow(0 0 20px rgba(253, 224, 71, 0.6));
+  }
+
+  .drop-shadow-md {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+  }
+
+  .drop-shadow-lg {
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.15));
   }
 }
