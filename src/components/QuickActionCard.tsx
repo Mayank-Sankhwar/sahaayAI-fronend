@@ -6,7 +6,7 @@ interface QuickActionCardProps {
   title: string;
   description: string;
   onClick?: () => void;
-  variant?: "default" | "accent";
+  delay?: number;
 }
 
 export function QuickActionCard({ 
@@ -14,44 +14,39 @@ export function QuickActionCard({
   title, 
   description, 
   onClick,
-  variant = "default" 
+  delay = 0
 }: QuickActionCardProps) {
   return (
     <button
       onClick={onClick}
+      role="listitem"
+      aria-label={`${title}: ${description}`}
       className={cn(
-        "flex items-start gap-4 p-4 rounded-2xl text-left transition-all duration-200",
-        "hover:scale-[1.02] active:scale-[0.98]",
-        variant === "default" 
-          ? "bg-card border border-border shadow-soft hover:shadow-elevated" 
-          : "bg-gradient-nature text-primary-foreground shadow-elevated"
+        "flex flex-col items-center text-center p-5 rounded-3xl",
+        "bg-card border border-border shadow-soft",
+        "transition-all duration-200",
+        "hover:shadow-elevated hover:scale-[1.02]",
+        "active:scale-[0.98]",
+        "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+        "animate-slide-up"
       )}
+      style={{ animationDelay: `${delay}ms` }}
     >
       <div
         className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
-          variant === "default" ? "bg-primary/10" : "bg-primary-foreground/20"
+          "w-14 h-14 rounded-2xl flex items-center justify-center mb-3",
+          "bg-gradient-nature shadow-soft"
         )}
+        aria-hidden="true"
       >
-        <Icon className={cn(
-          "w-5 h-5",
-          variant === "default" ? "text-primary" : "text-primary-foreground"
-        )} />
+        <Icon className="w-7 h-7 text-primary-foreground" />
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className={cn(
-          "font-display font-semibold text-sm",
-          variant === "default" ? "text-foreground" : "text-primary-foreground"
-        )}>
-          {title}
-        </h3>
-        <p className={cn(
-          "text-xs mt-0.5 line-clamp-2",
-          variant === "default" ? "text-muted-foreground" : "text-primary-foreground/80"
-        )}>
-          {description}
-        </p>
-      </div>
+      <h3 className="font-display font-bold text-base text-foreground">
+        {title}
+      </h3>
+      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+        {description}
+      </p>
     </button>
   );
 }
