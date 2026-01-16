@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useConversation } from "@elevenlabs/react";
+import axios from "axios";
 import { VoiceButton } from "./VoiceButton";
 import { VoiceWaveform } from "./VoiceWaveform";
 import { ChatMessage, Message } from "./ChatMessage";
@@ -19,6 +19,14 @@ import {
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+
+// Type declarations for Speech Recognition API
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
 
 const QUICK_PROMPTS = [
   {
@@ -59,56 +67,60 @@ export function FarmerVoiceAssistant() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [agentId, setAgentId] = useState<string>("");
-  const [showAgentInput, setShowAgentInput] = useState(false);
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [transcript, setTranscript] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isVoiceActiveRef = useRef(false);
 
-  const conversation = useConversation({
-    onConnect: () => {
-      console.log("Connected to farm assistant");
-      toast({
-        title: "Ready to help!",
-        description: "I'm here to answer your farming questions.",
-      });
-    },
-    onDisconnect: () => {
-      console.log("Disconnected from assistant");
-      toast({
-        title: "Disconnected",
-        description: "Tap the button again when you need me.",
-      });
-    },
-    onMessage: (message: any) => {
-      if (message.type === "user_transcript" && message.user_transcription_event?.user_transcript) {
-        const newMessage: Message = {
-          id: Date.now().toString(),
-          role: "user",
-          content: message.user_transcription_event.user_transcript,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, newMessage]);
+  useEffect(() => {
+    // Initialize speech recognition
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true; // Enable interim results
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        console.log('Speech recognition result received');
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          console.log(`Result ${i}: "${transcript}" (isFinal: ${result.isFinal})`);
+
+          if (result.isFinal) {
+            setTranscript(prev => prev + transcript + ' ');
+          }
+        }
+      };
+
+      recognitionRef.current.onstart = () => {
+        console.log('Speech recognition started');
+      };
+
+      recognitionRef.current.onend = () => {
+        console.log('Speech recognition ended');
+        // Don't restart automatically - let user control it
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        toast({
+          variant: "destructive",
+          title: "Voice Recognition Error",
+          description: `Error: ${event.error}`,
+        });
+        setIsVoiceActive(false);
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
       }
-      if (message.type === "agent_response" && message.agent_response_event?.agent_response) {
-        const newMessage: Message = {
-          id: Date.now().toString() + "-agent",
-          role: "assistant",
-          content: message.agent_response_event.agent_response,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, newMessage]);
-      }
-    },
-    onError: (error) => {
-      console.error("Conversation error:", error);
-      toast({
-        variant: "destructive",
-        title: "Connection Problem",
-        description: "Can't connect right now. Please try again.",
-      });
-      setIsConnecting(false);
-    },
-  });
+    };
+  }, [toast]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -118,51 +130,101 @@ export function FarmerVoiceAssistant() {
     scrollToBottom();
   }, [messages]);
 
-  const startConversation = useCallback(async () => {
-    if (!agentId.trim()) {
-      setShowAgentInput(true);
+  const startVoice = useCallback(async () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      console.error('Speech recognition not supported');
       toast({
-        title: "Setup Needed",
-        description: "Please enter your ID to get started.",
+        variant: "destructive",
+        title: "Speech Recognition Not Supported",
+        description: "Your browser doesn't support speech recognition.",
       });
       return;
     }
 
-    setIsConnecting(true);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      await conversation.startSession({
-        agentId: agentId.trim(),
-        connectionType: "webrtc",
+      setTranscript("");
+      setIsVoiceActive(true);
+      isVoiceActiveRef.current = true;
+
+      if (recognitionRef.current) {
+        console.log('Starting speech recognition...');
+        recognitionRef.current.start();
+        console.log('Speech recognition start() called');
+      } else {
+        console.error('Recognition ref is null');
+      }
+
+      toast({
+        title: "Voice Active",
+        description: "Voice assistant is now listening.",
       });
-    } catch (error: any) {
-      console.error("Failed to start:", error);
-      if (error.name === "NotAllowedError") {
+    } catch (error) {
+      console.error("Failed to start voice:", error);
+      toast({
+        variant: "destructive",
+        title: "Microphone Access Needed",
+        description: "Please allow microphone access to use voice features.",
+      });
+    }
+  }, [toast]);
+
+  const stopVoice = useCallback(async () => {
+    setIsVoiceActive(false);
+    isVoiceActiveRef.current = false;
+    
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+
+    const finalTranscript = transcript.trim();
+    if (finalTranscript) {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        role: "user",
+        content: finalTranscript,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+      console.log("What you said:", finalTranscript);
+
+      // Submit transcript to API
+      try {
+        await axios.post(`${import.meta.env.VITE_BACKEND_URL}`, {
+          query: finalTranscript,
+          timestamp: new Date().toISOString(),
+        });
+        console.log("Transcript submitted successfully");
+      } catch (error: any) {
+        console.error("Failed to submit transcript:", error);
         toast({
           variant: "destructive",
-          title: "Need Microphone",
-          description: "Please allow microphone access to talk.",
+          title: "Submission Failed",
+          description: "Failed to submit your message. Please try again.",
         });
       }
-    } finally {
-      setIsConnecting(false);
+    } else {
+      console.log("No speech detected");
     }
-  }, [conversation, agentId, toast]);
+    
+    toast({
+      title: "Voice Stopped",
+      description: `Captured: "${finalTranscript || 'No speech detected'}"`,
+    });
 
-  const stopConversation = useCallback(async () => {
-    await conversation.endSession();
-  }, [conversation]);
+    setTranscript("");
+  }, [toast, transcript]);
 
   const handleVoiceClick = () => {
-    if (conversation.status === "connected") {
-      stopConversation();
+    if (isVoiceActive) {
+      stopVoice();
     } else {
-      startConversation();
+      startVoice();
     }
   };
 
-  const isConnected = conversation.status === "connected";
+  const isConnected = isVoiceActive;
 
   return (
     <div 
@@ -202,46 +264,6 @@ export function FarmerVoiceAssistant() {
         <WeatherWidget />
       </header>
 
-      {showAgentInput && !isConnected && (
-        <div className="px-5 -mt-4 relative z-10 animate-slide-up">
-          <div className="bg-white rounded-3xl p-6 border-2 border-green-200 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
-                <span className="text-2xl">🔑</span>
-              </div>
-              <div>
-                <label
-                  htmlFor="agent-id-input"
-                  className="text-lg font-display font-bold text-gray-800 block"
-                >
-                  Setup Required
-                </label>
-                <p className="text-sm text-gray-600">Enter your ID to begin</p>
-              </div>
-            </div>
-            <input
-              id="agent-id-input"
-              type="text"
-              value={agentId}
-              onChange={(e) => setAgentId(e.target.value)}
-              placeholder="Paste your ID here..."
-              aria-describedby="agent-id-help"
-              className={cn(
-                "w-full px-5 py-4 rounded-2xl text-base",
-                "bg-gray-50 border-2 border-gray-200",
-                "text-gray-800 placeholder:text-gray-400",
-                "focus:outline-none focus:border-green-500 focus:bg-white",
-                "transition-all duration-200"
-              )}
-            />
-            <p id="agent-id-help" className="text-sm text-gray-600 mt-3 leading-relaxed">
-              Get your ID from{" "}
-              <span className="text-green-600 font-semibold">elevenlabs.io</span>
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Main Content */}
       <main className="flex-1 flex flex-col px-5 pt-6 overflow-hidden" role="main">
         {!isConnected && messages.length === 0 ? (
@@ -270,7 +292,7 @@ export function FarmerVoiceAssistant() {
                   bgColor={prompt.bgColor}
                   textColor={prompt.textColor}
                   onClick={() => {
-                    if (!agentId) setShowAgentInput(true);
+                    // Quick action clicked
                   }}
                   delay={i * 100}
                 />
@@ -342,30 +364,24 @@ export function FarmerVoiceAssistant() {
         <div className="flex flex-col items-center">
           <VoiceButton
             isConnected={isConnected}
-            isConnecting={isConnecting}
-            isSpeaking={conversation.isSpeaking}
+            isConnecting={false}
+            isSpeaking={false}
             onClick={handleVoiceClick}
           />
-          <VoiceWaveform isActive={isConnected} isSpeaking={conversation.isSpeaking} />
+          <VoiceWaveform isActive={isConnected} isSpeaking={false} />
           <div className="mt-4 text-center">
             <p
               className="text-lg font-bold text-gray-800"
               role="status"
               aria-live="polite"
             >
-              {isConnecting
-                ? "Getting ready..."
-                : isConnected
-                ? conversation.isSpeaking
-                  ? "I'm speaking..."
-                  : "I'm listening..."
+              {isConnected
+                ? "Voice Active"
                 : "Tap to talk"}
             </p>
-            {!isConnecting && (
-              <p className="text-sm text-gray-600 mt-1 font-medium">
-                {isConnected ? "Tap button to stop" : "Press the big button above"}
-              </p>
-            )}
+            <p className="text-sm text-gray-600 mt-1 font-medium">
+              {isConnected ? "Tap button to stop" : "Press the big button above"}
+            </p>
           </div>
         </div>
       </footer>

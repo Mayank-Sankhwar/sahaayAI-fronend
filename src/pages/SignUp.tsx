@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   User,
   Mail,
@@ -55,16 +56,13 @@ const LANGUAGES = [
 const DISABILITY_TYPES = [
   "Visual Impairment",
   "Hearing Impairment",
-  "Motor Disability",
-  "Cognitive Disability",
   "Speech Disability",
-  "Multiple Disabilities",
   "Other",
 ];
 
 const ANSWER_PREFERENCES = [
   { value: "voice", label: "Voice Only" },
-  { value: "text", label: "Text Only" },
+  { value: "chat", label: "Text Only" },
   { value: "both", label: "Voice + Text" },
 ];
 
@@ -92,18 +90,38 @@ export default function SignUp() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    toast({
-      title: "Account Created! 🎉",
-      description: "Welcome to Farm Assistant. Redirecting to sign in...",
-    });
+    try {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/signup`, {
+        username: formData.username,
+        email: formData.email,
+        code: formData.password,
+        // language_preference: formData.languagePreference,
+        phone_number: formData.phoneNumber,
+        disability_is: formData.hasDisability === "yes",
+        disability_type: formData.disabilityType,
+        answer_preference: formData.answerPreference,
+      });
 
-    setTimeout(() => {
-      navigate("/signin");
-    }, 2000);
+      toast({
+        title: "Account Created! 🎉",
+        description: "Welcome to Farm Assistant. Redirecting to sign in...",
+      });
+
+      setTimeout(() => {
+        navigate("/signin");
+      }, 1000);
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      toast({
+        variant: "destructive",
+        title: "Signup Failed",
+        description: error.response?.data?.message || "Something went wrong. Please try again.",
+      });
+    }
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field: string, value: string | number) => {
+    setFormData((prev) => ({ ...prev, [field]: field === 'password' ? Number(value) : value }));
   };
 
   return (
@@ -199,7 +217,7 @@ export default function SignUp() {
             <div className="relative group">
               <Input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? "text" : "number"}
                 placeholder="Create a strong password"
                 value={formData.password}
                 onChange={(e) => handleChange("password", e.target.value)}

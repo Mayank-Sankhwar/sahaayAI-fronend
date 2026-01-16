@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Phone, Lock, Leaf, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,18 +46,33 @@ export default function SignIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    toast({
-      title: "Welcome Back! 🌾",
-      description: "Redirecting to your dashboard...",
-    });
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/signin`, {
+        countryCode: formData.countryCode,
+        phone_number: formData.phoneNumber,
+        code: formData.password,
+      });
 
-    setTimeout(() => {
-      navigate("/");
-    }, 1500);
+      toast({
+        title: "Welcome Back! 🌾",
+        description: "Redirecting to your dashboard...",
+      });
+
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+    } catch (error: any) {
+      console.error("Signin error:", error);
+      toast({
+        variant: "destructive",
+        title: "Sign In Failed",
+        description: error.response?.data?.message || "Invalid credentials. Please try again.",
+      });
+    }
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field: string, value: string | number) => {
+    setFormData((prev) => ({ ...prev, [field]: field === 'password' ? Number(value) : value }));
   };
 
   return (
@@ -150,7 +166,7 @@ export default function SignIn() {
             <div className="relative group">
               <Input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? "text" : "number"}
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={(e) => handleChange("password", e.target.value)}
