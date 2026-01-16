@@ -361,6 +361,25 @@
     animation: pulse-slow 3s ease-in-out infinite;
   }
 
+  @keyframes wave-flow {
+    0%, 100% {
+      transform: translateX(0) scaleY(1);
+    }
+    25% {
+      transform: translateX(-15px) scaleY(1.3);
+    }
+    50% {
+      transform: translateX(0) scaleY(0.7);
+    }
+    75% {
+      transform: translateX(15px) scaleY(1.2);
+    }
+  }
+
+  .animate-wave-flow {
+    animation: wave-flow 2s ease-in-out infinite;
+  }
+
   /* Drop shadow glow effect */
   .drop-shadow-glow {
     filter: drop-shadow(0 0 20px rgba(253, 224, 71, 0.6));

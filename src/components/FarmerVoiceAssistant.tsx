@@ -69,6 +69,7 @@ export function FarmerVoiceAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isVoiceActiveRef = useRef(false);
@@ -97,10 +98,12 @@ export function FarmerVoiceAssistant() {
 
       recognitionRef.current.onstart = () => {
         console.log('Speech recognition started');
+        setIsSpeaking(true);
       };
 
       recognitionRef.current.onend = () => {
         console.log('Speech recognition ended');
+        setIsSpeaking(false);
         // Don't restart automatically - let user control it
       };
 
@@ -173,6 +176,7 @@ export function FarmerVoiceAssistant() {
   const stopVoice = useCallback(async () => {
     setIsVoiceActive(false);
     isVoiceActiveRef.current = false;
+    setIsSpeaking(false);
     
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -191,10 +195,22 @@ export function FarmerVoiceAssistant() {
 
       // Submit transcript to API
       try {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}`, {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}`, {
           query: finalTranscript,
           timestamp: new Date().toISOString(),
         });
+
+        // Add assistant response
+        if (response.data && response.data.response) {
+          const assistantMessage: Message = {
+            id: Date.now().toString() + '_assistant',
+            role: "assistant",
+            content: response.data.response,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+        }
+
         console.log("Transcript submitted successfully");
       } catch (error: any) {
         console.error("Failed to submit transcript:", error);
@@ -347,7 +363,10 @@ export function FarmerVoiceAssistant() {
                 </div>
               )}
               {messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
+                <ChatMessage 
+                  key={message.id} 
+                  message={message} 
+                />
               ))}
               <div ref={messagesEndRef} />
             </div>
@@ -356,28 +375,56 @@ export function FarmerVoiceAssistant() {
       </main>
 
       {/* Voice Control Footer */}
-      <footer 
-        className="px-5 pb-6 pt-4 safe-area-bottom bg-gradient-to-t from-background to-transparent"
+      <footer
+        className={cn(
+          "relative px-5 pb-6 pt-4 safe-area-bottom bg-gradient-to-t from-background to-transparent overflow-visible",
+          isSpeaking && "pb-12"
+        )}
         role="region"
         aria-label="Voice controls"
       >
-        <div className="flex flex-col items-center">
+        {/* Wavy bottom glow when speaking */}
+        {isSpeaking && (
+          <div className="absolute left-0 right-0 -bottom-12 flex justify-center pointer-events-none">
+            <div className="relative w-full max-w-lg h-16">
+              {/* Main glow wave */}
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-700/70 via-blue-600/50 to-transparent rounded-t-full blur-xl animate-pulse" />
+              {/* Secondary wave for depth */}
+              <div className="absolute inset-0 bg-gradient-to-t from-blue-800/50 via-blue-700/30 to-transparent rounded-t-full blur-2xl animate-pulse delay-300" />
+              {/* Animated wave lines */}
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 64" fill="none">
+                <path
+                  d="M0 64 Q100 20 200 64 T400 64 V64 H0 Z"
+                  fill="url(#waveGradient)"
+                  className="animate-wave-flow"
+                />
+                <defs>
+                  <linearGradient id="waveGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="rgb(29 78 216 / 0.9)" />
+                    <stop offset="50%" stopColor="rgb(59 130 246 / 0.6)" />
+                    <stop offset="100%" stopColor="rgb(59 130 246 / 0)" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col items-center relative z-10">
           <VoiceButton
             isConnected={isConnected}
             isConnecting={false}
-            isSpeaking={false}
+            isSpeaking={isSpeaking}
             onClick={handleVoiceClick}
           />
-          <VoiceWaveform isActive={isConnected} isSpeaking={false} />
+          <VoiceWaveform isActive={isConnected} isSpeaking={isSpeaking} />
           <div className="mt-4 text-center">
             <p
               className="text-lg font-bold text-gray-800"
               role="status"
               aria-live="polite"
             >
-              {isConnected
-                ? "Voice Active"
-                : "Tap to talk"}
+              {isConnected ? (isSpeaking ? "I'm speaking..." : "Voice Active") : "Tap to talk"}
             </p>
             <p className="text-sm text-gray-600 mt-1 font-medium">
               {isConnected ? "Tap button to stop" : "Press the big button above"}

@@ -19,7 +19,7 @@ export function VoiceWaveform({ isActive, isSpeaking }: VoiceWaveformProps) {
           key={i}
           className={cn(
             "w-1.5 rounded-full transition-all duration-200",
-            isSpeaking ? "bg-accent" : "bg-primary",
+            isSpeaking ? "bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.7)]" : "bg-primary",
             i === 0 && "animate-wave",
             i === 1 && "animate-wave-delay-1",
             i === 2 && "animate-wave-delay-2",
@@ -30,6 +30,7 @@ export function VoiceWaveform({ isActive, isSpeaking }: VoiceWaveformProps) {
           )}
           style={{
             height: isActive ? undefined : "8px",
+            transform: isSpeaking ? `scaleY(${1 + (i % 3) * 0.4})` : undefined,
           }}
           aria-hidden="true"
         />

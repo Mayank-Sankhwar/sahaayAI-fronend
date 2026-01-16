@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { User, Leaf } from "lucide-react";
+import { User, Leaf, Volume2 } from "lucide-react";
 
 export interface Message {
   id: string;
@@ -10,9 +10,11 @@ export interface Message {
 
 interface ChatMessageProps {
   message: Message;
+  onSpeak?: (text: string) => void;
+  isSpeaking?: boolean;
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, onSpeak, isSpeaking }: ChatMessageProps) {
   const isUser = message.role === "user";
 
   return (
@@ -51,15 +53,34 @@ export function ChatMessage({ message }: ChatMessageProps) {
         )}>
           {message.content}
         </p>
-        <time
-          dateTime={message.timestamp.toISOString()}
-          className={cn(
-            "text-xs mt-2 block font-medium",
-            isUser ? "text-primary-foreground/60" : "text-muted-foreground"
+        <div className="flex items-center justify-between mt-2">
+          <time
+            dateTime={message.timestamp.toISOString()}
+            className={cn(
+              "text-xs font-medium",
+              isUser ? "text-primary-foreground/60" : "text-muted-foreground"
+            )}
+          >
+            {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </time>
+          
+          {/* Speak button for assistant messages */}
+          {!isUser && onSpeak && (
+            <button
+              onClick={() => onSpeak(message.content)}
+              disabled={isSpeaking}
+              className={cn(
+                "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors",
+                "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring",
+                isSpeaking ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary hover:bg-primary/20"
+              )}
+              aria-label={`Speak message: ${message.content}`}
+            >
+              <Volume2 className="w-3 h-3" />
+              {isSpeaking ? "Speaking..." : "Speak"}
+            </button>
           )}
-        >
-          {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </time>
+        </div>
       </div>
     </article>
   );

@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { 
-  Accessibility, 
-  ZoomIn, 
-  ZoomOut, 
-  Contrast, 
-  Volume2,
-  VolumeX,
+import {
+  Accessibility,
+  ZoomIn,
+  ZoomOut,
+  Contrast,
   Eye,
   X
 } from "lucide-react";
@@ -15,7 +13,6 @@ interface AccessibilitySettings {
   fontSize: number;
   highContrast: boolean;
   reducedMotion: boolean;
-  screenReaderMode: boolean;
 }
 
 export function AccessibilityToolbar() {
@@ -26,7 +23,6 @@ export function AccessibilityToolbar() {
       fontSize: 100,
       highContrast: false,
       reducedMotion: false,
-      screenReaderMode: false,
     };
   });
 
@@ -49,13 +45,6 @@ export function AccessibilityToolbar() {
     } else {
       document.documentElement.classList.remove("reduce-motion");
     }
-
-    // Apply screen reader mode
-    if (settings.screenReaderMode) {
-      document.documentElement.classList.add("sr-mode");
-    } else {
-      document.documentElement.classList.remove("sr-mode");
-    }
   }, [settings]);
 
   const increaseFontSize = () => {
@@ -72,10 +61,6 @@ export function AccessibilityToolbar() {
 
   const toggleReducedMotion = () => {
     setSettings(prev => ({ ...prev, reducedMotion: !prev.reducedMotion }));
-  };
-
-  const toggleScreenReaderMode = () => {
-    setSettings(prev => ({ ...prev, screenReaderMode: !prev.screenReaderMode }));
   };
 
   return (
@@ -172,13 +157,6 @@ export function AccessibilityToolbar() {
               description="Minimize animations"
               checked={settings.reducedMotion}
               onChange={toggleReducedMotion}
-            />
-            <ToggleOption
-              icon={settings.screenReaderMode ? Volume2 : VolumeX}
-              label="Screen Reader"
-              description="Enhanced descriptions"
-              checked={settings.screenReaderMode}
-              onChange={toggleScreenReaderMode}
             />
           </div>
         </div>

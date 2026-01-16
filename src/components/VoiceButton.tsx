@@ -43,7 +43,7 @@ export function VoiceButton({ isConnected, isConnecting, isSpeaking, onClick }: 
         isConnecting && "opacity-70 cursor-wait",
         !isConnected && !isConnecting && "animate-voice-pulse",
         isPressed && "scale-95",
-        isSpeaking && "shadow-[0_0_60px_rgba(251,191,36,0.5)]"
+        isSpeaking && "shadow-[0_0_60px_rgba(37,99,235,0.6)]"
       )}
     >
       {/* Outer ripple rings when connected */}
@@ -64,11 +64,11 @@ export function VoiceButton({ isConnected, isConnecting, isSpeaking, onClick }: 
       {isSpeaking && (
         <>
           <span
-            className="absolute inset-0 rounded-full bg-amber-400/30 animate-ping"
+            className="absolute inset-0 rounded-full bg-blue-600/40 animate-ping"
             aria-hidden="true"
           />
           <span
-            className="absolute inset-[-5px] rounded-full bg-amber-300/20 animate-pulse"
+            className="absolute inset-[-5px] rounded-full bg-blue-500/30 animate-pulse"
             aria-hidden="true"
           />
         </>
